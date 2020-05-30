@@ -1,8 +1,13 @@
 import discord
+import redis
+import os
 
 TOKEN = "NzE1OTQ0OTQ4MTMzNzg5ODYz.XtEmQg.mzTOYnLkmWggbsbPIDeHPBmW4mI"
 
-assignment_list = []
+conn = redis.from_url(
+    url = os.environ.get
+    decode_responses = True
+)
 
 client = discord.Client()
 
@@ -22,33 +27,35 @@ async def newkadai(message):
     try:
         title, deadline, memo = msg[1:]
 
-        assignment_list.append({
-            'title': title,
-            'deadline': deadline,
-            'memo': memo
-        })
+        conn.hset(title, 'title', title)
+        conn.hset(title, 'deadline', deadline)
+        conn.hset(title, 'memo',  memo)
 
         await message.channel.send('課題を追加しました！')
     except:
         await message.channel.send('入力形式が間違っています。')
 
 async def deletekadai(message):
-    msg = message.content.split(' ')
-    for i in range(len(assignment_list)):
-        if assignment_list[i]['title'] == msg[1]:
-            assignment_list.pop(i)
+    try:
+        title = message.content.split(' ')[1]
+        if conn.exists(title):
+            conn.delete(title)
             await message.channel.send('課題を削除しました')
+        else:
+            await message.channel.send('そのような課題はありません')
+    except:
+        await message.channel.send('入力形式が間違っています。')
 
 async def kadailist(message):
     string = '課題一覧\n'
-    for i, assignment in enumerate(assignment_list):
+    for i, title in enumerate(conn.keys()):
         string += '------------------------\n'
-        string += '{}. {}\n'.format(i + 1, assignment['title'])
-        string += '締切: {}\n'.format(assignment['deadline'])
-        string += '備考: {}\n'.format(assignment['memo'])
+        string += '{}. {}\n'.format(i + 1, title)
+        string += '締切: {}\n'.format(conn.hget(title, 'deadline'))
+        string += '備考: {}\n'.format(conn.hget(title, 'memo'))
         string += '------------------------\n'
 
-    string += '現在、{}個の課題が出されています。'.format(len(assignment_list))
+    string += '現在、{}個の課題が出されています。'.format(len(conn.keys()))
     await message.channel.send(string)
 
 async def close(message):
