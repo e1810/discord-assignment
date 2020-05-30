@@ -11,18 +11,17 @@ conn = redis.from_url(
 
 client = discord.Client()
 
-async def kadaihelp(message):
-    string = 'コマンドリスト\n'
+async def man(message):
+    ret = 'ヘルプ\n'
     for command in COMMANDS:
-        string += '------------------------\n'
-        string += '{}: {}\n'.format('!' + command, COMMANDS[command]['description'])
-        string += '    使い方: {}\n'.format(COMMANDS[command]['use'])
-        string += '    省略形: {}\n'.format(COMMANDS[command]['alias'])
-        string += '------------------------'
+        ret += '------------------------\n'
+        ret += '{}: {}\n'.format('!' + command, COMMANDS[command]['description'])
+        ret += '    使い方: {}\n'.format(COMMANDS[command]['use'])
+        ret += '    省略形: {}\n'.format(COMMANDS[command]['alias'])
+        ret += '------------------------'
+    await message.channel.send(ret)
 
-    await message.channel.send(string)
-
-async def newkadai(message):
+async def add(message):
     msg = message.content.split(' ')
     try:
         title, deadline, memo = msg[1:]
@@ -35,7 +34,7 @@ async def newkadai(message):
     except:
         await message.channel.send('入力形式が間違っています。')
 
-async def deletekadai(message):
+async def delete(message):
     try:
         title = message.content.split(' ')[1]
         if conn.exists(title):
@@ -46,45 +45,45 @@ async def deletekadai(message):
     except:
         await message.channel.send('入力形式が間違っています。')
 
-async def kadailist(message):
-    string = '課題一覧\n'
+async def ls(message):
+    ret = '課題一覧\n'
     for i, title in enumerate(conn.keys()):
-        string += '------------------------\n'
-        string += '{}. {}\n'.format(i + 1, title)
-        string += '締切: {}\n'.format(conn.hget(title, 'deadline'))
-        string += '備考: {}\n'.format(conn.hget(title, 'memo'))
-        string += '------------------------\n'
+        ret += '------------------------\n'
+        ret += '{}. {}\n'.format(i + 1, title)
+        ret += '締切: {}\n'.format(conn.hget(title, 'deadline'))
+        ret += '備考: {}\n'.format(conn.hget(title, 'memo'))
+        ret += '------------------------\n'
 
-    string += '現在、{}個の課題が出されています。'.format(len(conn.keys()))
-    await message.channel.send(string)
+    ret += '現在、{}個の課題が出されています。'.format(len(conn.keys()))
+    await message.channel.send(ret)
 
 async def close(message):
     await client.close()
 
 COMMANDS = {
-    'kadaihelp': {
+    'help': {
         'description': 'このリストを表示します。',
-        'use': '!kadaihelp',
-        'alias': '!kh',
-        'func': kadaihelp
+        'use': '!help',
+        'alias': '!h',
+        'func': man
     },
-    'newkadai': {
+    'add': {
         'description': '新しい課題を追加します。',
-        'use': '!newkadai \{タイトル\} \{締切\} \{備考\}',
-        'alias': '!nk',
-        'func': newkadai
+        'use': '!add \{課題名\} \{締切\} \{備考\}',
+        'alias': '!a',
+        'func': add
     },
-    'deletekadai': {
+    'delete': {
         'description': '課題削除',
-        'use': '!deletekadai \{課題名\}',
-        'alias': '!dk',
-        'func': deletekadai
+        'use': '!delete \{課題名\}',
+        'alias': '!del',
+        'func': delete
     },
-    'kadailist': {
+    'list': {
         'description': '登録されている課題一覧を表示します。',
-        'use': '!kadailist',
-        'alias': '!kl',
-        'func': kadailist
+        'use': '!list',
+        'alias': '!ls',
+        'func': ls
     },
     'exit': {
         'description': 'Botを終了します。',
@@ -96,7 +95,7 @@ COMMANDS = {
 
 @client.event
 async def on_ready():
-    print('KadaiShosu起動')
+    print('I\'m ready')
 
 @client.event
 async def on_message(message):
