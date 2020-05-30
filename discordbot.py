@@ -1,8 +1,13 @@
 import discord
+from discord.ext import tasks
 import redis
+
 import os
+import datetime
+from dateutil.relativedelta import relativedelta
 
 TOKEN = "NzE1OTQ0OTQ4MTMzNzg5ODYz.XtEmQg.mzTOYnLkmWggbsbPIDeHPBmW4mI"
+CHANNEL_ID = 715947254782885951
 
 conn = redis.from_url(
     url = os.environ.get('REDIS_URL'),
@@ -12,6 +17,7 @@ conn = redis.from_url(
 client = discord.Client()
 
 async def man(message):
+    print('sending help')
     ret = 'ヘルプ\n'
     for command in COMMANDS:
         ret += '------------------------\n'
@@ -22,6 +28,7 @@ async def man(message):
     await message.channel.send(ret)
 
 async def add(message):
+    print('add assignment')
     msg = message.content.split(' ')
     try:
         title, deadline, memo = msg[1:]
@@ -35,6 +42,7 @@ async def add(message):
         await message.channel.send('入力形式が間違っています。')
 
 async def delete(message):
+    print('delete assignment')
     try:
         title = message.content.split(' ')[1]
         if conn.exists(title):
@@ -46,6 +54,7 @@ async def delete(message):
         await message.channel.send('入力形式が間違っています。')
 
 async def ls(message):
+    print('sending list')
     ret = '課題一覧\n'
     for i, title in enumerate(conn.keys()):
         ret += '------------------------\n'
@@ -58,6 +67,7 @@ async def ls(message):
     await message.channel.send(ret)
 
 async def close(message):
+    print('I\'ll be back')
     await client.close()
 
 COMMANDS = {
@@ -96,6 +106,7 @@ COMMANDS = {
 @client.event
 async def on_ready():
     print('I\'m ready')
+    await loop.start()
 
 @client.event
 async def on_message(message):
@@ -107,5 +118,50 @@ async def on_message(message):
     for command in COMMANDS:
         if msg[0] in ['!' + command, COMMANDS[command]['alias']]:
             await COMMANDS[command]['func'](message)
+
+
+@tasks.loop(hours=5)
+async def loop():
+    print("sending notification")
+    today = datetime.datetime.now()
+    tommorow = today + relativedelta(days=1)
+    three_days_later = tommorow + relativedelta(days=2)
+    remain_1day = []
+    remain_3day = []
+
+    for title in conn.keys():
+        deadline_str = str(tommorow.year) + '/' + conn.hget(title, 'deadline')
+        deadline = datetime.datetime.strptime(deadline_str, '%Y/%m/%d')
+        if deadline < today:
+            conn.hdel(title)
+        elif deadline <= tommorow:
+            remain_1day.append(title)
+        elif deadline <= three_days_later:
+            remain_3day.append(title)
+
+    if len(remain_1day)+len(remain_3day)==0:
+        return
+
+    ret = '{}個の課題の提出期限が迫っています！\n'.format(len(remain_1day)+len(remain_3day))
+    for i, title in enumerate(remain_3day):
+        ret += '------------------------\n'
+        ret += '{}. {}\n'.format(i + 1, title)
+        ret += '締切: {}\n'.format(conn.hget(title, 'deadline'))
+        ret += '備考: {}\n'.format(conn.hget(title, 'memo'))
+        ret += '------------------------\n'
+    if remain_1day:
+        ret += '↓↓↓あと1日もないよ↓↓↓\n'
+    for i, title in enumerate(remain_1day):
+        ret += '------------------------\n'
+        ret += '{}. {}\n'.format(i + 1, title)
+        ret += '締切: {}\n'.format(conn.hget(title, 'deadline'))
+        ret += '備考: {}\n'.format(conn.hget(title, 'memo'))
+        ret += '------------------------\n'
+        
+
+    channel = client.get_channel(CHANNEL_ID)
+    await channel.send(ret)
+
+
 
 client.run(TOKEN)
