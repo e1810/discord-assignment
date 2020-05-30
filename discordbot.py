@@ -7,6 +7,7 @@ import datetime
 from dateutil.relativedelta import relativedelta
 
 TOKEN = "NzE1OTQ0OTQ4MTMzNzg5ODYz.XtIRiA.MVya_72oPtVODEGze6jxBNYhR68"
+GUILD_ID = 715947254782885948
 CHANNEL_ID = 715947254782885951
 
 conn = redis.from_url(
@@ -146,8 +147,18 @@ async def loop():
     three_days_later = tommorow + relativedelta(days=2)
     remain_1day = []
     remain_3day = []
+    guild = client.get_guild(GUILD_ID)
 
     for key in conn.keys():
+        target = conn.hget(key, 'target')
+        exist = (target == '@everyone')
+        for mem in guild.members:
+            if target==mem.mention:
+                exist = True
+        if not exist:
+            conn.delete(key)
+            continue
+
         deadline_str = str(tommorow.year) + '/' + conn.hget(key, 'deadline')
         deadline = datetime.datetime.strptime(deadline_str, '%Y/%m/%d')
         if deadline < today:
@@ -163,7 +174,7 @@ async def loop():
     ret = '{}個の課題の提出期限が迫っています！\n'.format(len(remain_1day)+len(remain_3day))
     for i, key in enumerate(remain_3day):
         ret += '------------------------\n'
-        ret += '{}. {}\n'.format(i + 1, conn.hget(key, 'title'))
+        ret += '{}. {}\n'.format(i + 1, key)
         ret += '締切: {}\n'.format(conn.hget(key, 'deadline'))
         ret += '備考: {}\n'.format(conn.hget(key, 'memo'))
         ret += '------------------------\n'
@@ -172,7 +183,7 @@ async def loop():
         ret += '↓↓↓あと1日もないよ↓↓↓\n'
     for i, key in enumerate(remain_1day):
         ret += '------------------------\n'
-        ret += '{}. {}\n'.format(i + 1, (key))
+        ret += '{}. {}\n'.format(i + 1, key)
         ret += '締切: {}\n'.format(conn.hget(key, 'deadline'))
         ret += '備考: {}\n'.format(conn.hget(key, 'memo'))
         ret += '------------------------\n'
