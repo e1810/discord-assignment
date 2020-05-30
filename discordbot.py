@@ -6,7 +6,7 @@ import os
 import datetime
 from dateutil.relativedelta import relativedelta
 
-TOKEN = "NzE1OTQ0OTQ4MTMzNzg5ODYz.XtEmQg.mzTOYnLkmWggbsbPIDeHPBmW4mI"
+TOKEN = "NzE1OTQ0OTQ4MTMzNzg5ODYz.XtIRiA.MVya_72oPtVODEGze6jxBNYhR68"
 CHANNEL_ID = 715947254782885951
 
 conn = redis.from_url(
