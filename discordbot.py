@@ -5,7 +5,7 @@ import os
 TOKEN = "NzE1OTQ0OTQ4MTMzNzg5ODYz.XtEmQg.mzTOYnLkmWggbsbPIDeHPBmW4mI"
 
 conn = redis.from_url(
-    url = os.environ.get('REDIS_URL')
+    url = os.environ.get('REDIS_URL'),
     decode_responses = True
 )
 
