@@ -159,7 +159,6 @@ async def on_message(message):
 
 @tasks.loop(hours=5)
 async def loop():
-    print("sending notification")
     today = datetime.datetime.now() + relativedelta(hours=9)
     tommorow = today + relativedelta(days=1)
     three_days_later = today + relativedelta(days=3)
@@ -189,8 +188,10 @@ async def loop():
             remain_3day.append(key)
 
     if len(remain_1day)+len(remain_3day)==0:
+        print('there\'s no notification')
         return
 
+    print('sending notification')
     ret = '{}個の課題の提出期限が迫っています！\n'.format(len(remain_1day)+len(remain_3day))
     for i, key in enumerate(remain_3day):
         ret += '------------------------\n'
