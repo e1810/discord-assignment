@@ -16,6 +16,7 @@ conn = redis.from_url(
 )
 
 client = discord.Client()
+guild = client.get_guild(GUILD_ID)
 
 async def man(message):
     print('sending help')
@@ -164,7 +165,6 @@ async def loop():
     three_days_later = today + relativedelta(days=3)
     remain_1day = []
     remain_3day = []
-    guild = client.get_guild(GUILD_ID)
 
     for key in conn.keys():
         target = conn.hget(key, 'target')
