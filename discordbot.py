@@ -69,7 +69,7 @@ async def add(message):
 async def delete(message):
     try:
         title = message.content.split(' ')[1]
-        key = title.message.author.mention
+        key = message.author.mention
         if conn.exists(key):
             conn.delete(key)
             print('delete assignment: {}'.format(key))
