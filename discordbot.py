@@ -30,7 +30,6 @@ async def man(message):
 
 
 async def add(message):
-    print('add assignment')
     msg = message.content.split(' ')
 
     if len(msg) == 4:
@@ -40,6 +39,7 @@ async def add(message):
         conn.hset(key, 'deadline', deadline)
         conn.hset(key, 'memo',  memo)
         conn.hset(key, 'target', message.author.mention)
+        print('add assignment {}'.format(key))
         await message.channel.send('課題を追加しました！')
     elif len(msg) == 5:
         title, deadline, memo, target = msg[1:]
@@ -48,24 +48,30 @@ async def add(message):
         conn.hset(key, 'deadline', deadline)
         conn.hset(key, 'memo', memo)
         conn.hset(key, 'target', target)
+        print('add assignment {}'.format(key))
         await message.channel.send('課題を追加しました！')
     else:
+        print('failed to add assignment: {}'.format(message.content))
         await message.channel.send('入力形式が間違っています。')
 
 
 async def delete(message):
-    print('delete assignment')
     try:
         title = message.content.split(' ')[1]
-        if conn.exists(title+message.author.mention):
-            conn.delete(title+message.author.mention)
+        key = title.message.author.mention
+        if conn.exists(key):
+            conn.delete(key)
+            print('delete assignment: {}'.format(key))
             await message.channel.send('課題を削除しました')
         elif conn.exists(title+'@everyone'):
             conn.delete(title+'@everyone')
+            print('delete assignment: {}'.format(title+'@everyone'))
             await message.channel.send('課題を削除しました')
         else:
+            print('failed to delete assignment: {}'.format(message.content))
             await message.channel.send('そのような課題はありません')
     except:
+        print('failed to delete assignment: {}'.format(message.content))
         await message.channel.send('入力形式が間違っています。')
 
 
@@ -142,7 +148,7 @@ async def on_message(message):
 @tasks.loop(hours=5)
 async def loop():
     print("sending notification")
-    today = datetime.datetime.now()
+    today = datetime.datetime.now() + relativedelta(hours=9)
     tommorow = today + relativedelta(days=1)
     three_days_later = tommorow + relativedelta(days=2)
     remain_1day = []
@@ -156,6 +162,7 @@ async def loop():
             if target==mem.mention:
                 exist = True
         if not exist:
+            print('delete {} because of undefined mention'.format(key))
             conn.delete(key)
             continue
 
@@ -163,6 +170,7 @@ async def loop():
         deadline = datetime.datetime.strptime(deadline_str, '%Y/%m/%d')
         if deadline < today:
             conn.delete(key)
+            print('delete {} because of deadline'.format(key)) 
         elif deadline <= tommorow:
             remain_1day.append(key)
         elif deadline <= three_days_later:
