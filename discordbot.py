@@ -158,7 +158,7 @@ async def on_message(message):
 
 @tasks.loop(hours=5)
 async def loop():
-    today = datetime.datetime.now() + relativedelta(hours=9)
+    today = datetime.datetime.now() #+ relativedelta(hours=9)
     tommorow = today + relativedelta(days=1)
     three_days_later = today + relativedelta(days=3)
     remain_1day = []
