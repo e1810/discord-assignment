@@ -45,6 +45,7 @@ async def add(message):
     elif len(msg) == 5:
         title, deadline, memo, target = msg[1:]
 
+        guild = client.get_guild(GUILD_ID)
         exist = (target == '@everyone')
         for mem in guild.members:
             if target in (mem.name, mem.nick):
@@ -140,7 +141,6 @@ COMMANDS = {
 
 @client.event
 async def on_ready():
-    guild = client.get_guild(GUILD_ID)
     print('I\'m ready')
     await loop.start()
 
@@ -165,6 +165,7 @@ async def loop():
     three_days_later = today + relativedelta(days=3)
     remain_1day = []
     remain_3day = []
+    guild = client.get_guild(GUILD_ID)
 
     for key in conn.keys():
         target = conn.hget(key, 'target')
