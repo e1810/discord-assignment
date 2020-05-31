@@ -16,7 +16,6 @@ conn = redis.from_url(
 )
 
 client = discord.Client()
-guild = client.get_guild(GUILD_ID)
 
 async def man(message):
     print('sending help')
@@ -141,6 +140,7 @@ COMMANDS = {
 
 @client.event
 async def on_ready():
+    guild = client.get_guild(GUILD_ID)
     print('I\'m ready')
     await loop.start()
 
