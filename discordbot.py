@@ -41,8 +41,19 @@ async def add(message):
         conn.hset(key, 'target', message.author.mention)
         print('add assignment {}'.format(key))
         await message.channel.send('課題を追加しました！')
+
     elif len(msg) == 5:
         title, deadline, memo, target = msg[1:]
+
+        exist = (target == '@everyone')
+        for mem in guild.members:
+            if target in (mem.name, mem.nick):
+                exist = True
+        if not exist:
+            print('delete {} because of undefined mention'.format(key))
+            conn.delete(key)
+            await message.channel.send('そのような人物はサーバ内に存在しません')
+
         key = title + target
         conn.hset(key, 'title', title)
         conn.hset(key, 'deadline', deadline)
@@ -76,7 +87,6 @@ async def delete(message):
 
 
 async def ls(message):
-    print('sending list')
     cnt = 0
     ret = '課題一覧\n'
     for i, key in enumerate(conn.keys()):
@@ -88,6 +98,7 @@ async def ls(message):
             ret += '------------------------\n'
             cnt += 1
     ret += '現在、{}個の課題が出されています。'.format(cnt)
+    print('sending list')
     await message.channel.send(ret)
 
 async def close(message):
@@ -150,7 +161,7 @@ async def loop():
     print("sending notification")
     today = datetime.datetime.now() + relativedelta(hours=9)
     tommorow = today + relativedelta(days=1)
-    three_days_later = tommorow + relativedelta(days=2)
+    three_days_later = today + relativedelta(days=3)
     remain_1day = []
     remain_3day = []
     guild = client.get_guild(GUILD_ID)
