@@ -51,8 +51,7 @@ async def add(message):
             if target in (mem.name, mem.nick):
                 exist = True
         if not exist:
-            print('delete {} because of undefined mention'.format(key))
-            conn.delete(key)
+            print('failed to add assignment: {}'.format(message.content))
             await message.channel.send('そのような人物はサーバ内に存在しません')
 
         key = title + target
