@@ -8,7 +8,7 @@ from dateutil.relativedelta import relativedelta
 
 TOKEN = os.environ.get('BOT_TOKEN')
 GUILD_ID = int(os.environ.get('KADAI_GUILD_ID'))
-CHANNEL_ID = int(os.environ.get('CHANNEL_ID'))
+CHANNEL_ID = int(os.environ.get('KADAI_CHANNEL_ID'))
 
 conn = redis.from_url(
     url = os.environ.get('REDIS_URL'),
