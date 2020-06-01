@@ -7,8 +7,10 @@ import datetime
 from dateutil.relativedelta import relativedelta
 
 TOKEN = "NzE1OTQ0OTQ4MTMzNzg5ODYz.XtIRiA.MVya_72oPtVODEGze6jxBNYhR68"
-GUILD_ID = 715947254782885948
-CHANNEL_ID = 715947254782885951
+GUILD_ID = 709195822713274389
+#GUILD_ID = 715947254782885948
+CHANNEL_ID = 716891489094860911
+#CHANNEL_ID = 715947254782885951
 
 conn = redis.from_url(
     url = os.environ.get('REDIS_URL'),
@@ -48,11 +50,13 @@ async def add(message):
         guild = client.get_guild(GUILD_ID)
         exist = (target == '@everyone')
         for mem in guild.members:
-            if target in (mem.name, mem.nick):
+            if target in ('@'+mem.name, '@+'+mem.nick):
+                target = mem.mention
                 exist = True
         if not exist:
             print('failed to add assignment: {}'.format(message.content))
             await message.channel.send('そのような人物はサーバ内に存在しません')
+            return
 
         key = title + target
         conn.hset(key, 'title', title)
