@@ -33,6 +33,7 @@ async def man(message):
 
 async def add(message):
     msg = message.content.split(' ')
+    guild = client.get_guild(GUILD_ID)
 
     if len(msg) == 4:
         title, deadline, memo = msg[1:]
@@ -47,12 +48,19 @@ async def add(message):
     elif len(msg) == 5:
         title, deadline, memo, target = msg[1:]
 
-        guild = client.get_guild(GUILD_ID)
-        exist = (target == '@everyone')
-        for mem in guild.members:
+        exist = False
+        if target == '@everyone': exist = True
+        else:
+            mem = guild.get_member_named(target[1:])
+            if not(mem is None):
+                exist = True
+                target = mem.mention
+        """for mem in guild.members:
             if target in ('@'+mem.name, '@+'+mem.nick):
                 target = mem.mention
                 exist = True
+        """
+
         if not exist:
             print('failed to add assignment: {}'.format(message.content))
             await message.channel.send('そのような人物はサーバ内に存在しません')
