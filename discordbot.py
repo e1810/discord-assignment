@@ -79,10 +79,10 @@ async def delete(message):
             conn.delete(key)
             print('delete assignment: {}'.format(key))
             await message.channel.send('課題を削除しました')
-        elif conn.exists(title+'@everyone'):
-            conn.delete(title+'@everyone')
-            print('delete assignment: {}'.format(title+'@everyone'))
-            await message.channel.send('課題を削除しました')
+#        elif conn.exists(title+'@everyone'):
+#            conn.delete(title+'@everyone')
+#            print('delete assignment: {}'.format(title+'@everyone'))
+#            await message.channel.send('課題を削除しました')
         else:
             print('failed to delete assignment: {}'.format(message.content))
             await message.channel.send('そのような課題はありません')
