@@ -36,7 +36,7 @@ async def add(message):
     if len(msg) == 4:
         title, deadline, memo = msg[1:]
         user = message.author.mention
-        conn.hset(user, title, {'deadline':deadline, 'memo':memo})
+        conn.hset(user, title, deadline + ',' + memo})
         print(f'add assignment {message.content}')
         await message.channel.send('課題を追加しました！')
 
@@ -65,21 +65,20 @@ async def delete(message):
 
 async def ls(message):
     print('!ls called')
-    """
+    user = message.author.mention
     cnt = 0
     ret = '課題一覧\n'
-    for i, key in enumerate(conn.keys()):
-        if conn.hget(key, 'target') in (message.author.mention, '@everyone'):
-            ret += '------------------------\n'
-            ret += '{}. {}\n'.format(cnt + 1, conn.hget(key, 'title'))
-            ret += '締切: {}\n'.format(conn.hget(key, 'deadline'))
-            ret += '備考: {}\n'.format(conn.hget(key, 'memo'))
-            ret += '------------------------\n'
-            cnt += 1
+    for i, title in enumerate(conn.hkeys(user)):
+        deadline, memo = conn.hget(user, title).split(',')
+        ret += '------------------------\n'
+        ret += '{}. {}\n'.format(cnt + 1, title)
+        ret += '締切: {}\n'.format(deadline)
+        ret += '備考: {}\n'.format(memo)
+        ret += '------------------------\n'
+        cnt += 1
     ret += '現在、{}個の課題が出されています。'.format(cnt)
-    print('sending list')
+    print('sent list')
     await message.channel.send(ret)
-    """
 
 async def close(message):
     print('I\'ll be back')
