@@ -15,8 +15,6 @@ conn = redis.from_url(
 )
 
 client = discord.Client()
-guild = client.get_guild(GUILD_ID)
-print(GUILD_ID, guild)
 
 async def man(message):
     print('!help called')
@@ -54,6 +52,8 @@ async def delete(message):
         for title in conn.hkeys(user):
             if req_title==title:
                 conn.delete(user, title)
+                print(f'delete assignment: {title}')
+                await message.channel.send('課題を削除しました！: ' + title)
                 break
         else:
             print(f'failed to delete assignment: {message.content}')
@@ -152,6 +152,7 @@ async def loop():
     remain_1day = []
     remain_3day = []
 
+    guild = client.get_guild(GUILD_ID)
     for user in guild.members:
         for title in conn.hkeys(user):
             deadline, memo = conn.hget(user, title)
