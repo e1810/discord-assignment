@@ -8,7 +8,6 @@ from dateutil.relativedelta import relativedelta
 
 TOKEN = os.environ.get('BOT_TOKEN')
 GUILD_ID = int(os.environ.get('KADAI_GUILD_ID'))
-CHANNEL_ID = int(os.environ.get('KADAI_CHANNEL_ID'))
 
 conn = redis.from_url(
     url = os.environ.get('REDIS_URL'),
@@ -16,9 +15,10 @@ conn = redis.from_url(
 )
 
 client = discord.Client()
+guild = client.get_guild(GUILD_ID)
 
 async def man(message):
-    print('sending help')
+    print('!help called')
     ret = 'ヘルプ\n'
     for command in COMMANDS:
         ret += '------------------------\n'
@@ -30,68 +30,42 @@ async def man(message):
 
 
 async def add(message):
-    msg = message.content.split(' ')
-    guild = client.get_guild(GUILD_ID)
+    print('!add called')
+    msg = message.content.split()
 
     if len(msg) == 4:
         title, deadline, memo = msg[1:]
-        key = title + message.author.mention
-        conn.hset(key, 'title', title)
-        conn.hset(key, 'deadline', deadline)
-        conn.hset(key, 'memo',  memo)
-        conn.hset(key, 'target', message.author.mention)
-        print('add assignment {}'.format(key))
+        user = message.author.mention
+        conn.hset(user, title, {'deadline':deadline, 'memo':memo})
+        print(f'add assignment {message.content}')
         await message.channel.send('課題を追加しました！')
 
-    elif len(msg) == 5:
-        title, deadline, memo, target = msg[1:]
-
-        exist = False
-        if target == '@everyone': exist = True
-        else:
-            mem = guild.get_member_named(target[1:])
-            if not(mem is None):
-                exist = True
-                target = mem.mention
-        
-        if not exist:
-            print('failed to add assignment: {}'.format(message.content))
-            await message.channel.send('そのような人物はサーバ内に存在しません')
-            return
-
-        key = title + target
-        conn.hset(key, 'title', title)
-        conn.hset(key, 'deadline', deadline)
-        conn.hset(key, 'memo', memo)
-        conn.hset(key, 'target', target)
-        print('add assignment {}'.format(key))
-        await message.channel.send('課題を追加しました！')
     else:
-        print('failed to add assignment: {}'.format(message.content))
+        print(f'failed to add assignment: {message.content}')
         await message.channel.send('入力形式が間違っています。')
 
 
 async def delete(message):
-    try:
-        title = message.content.split(' ')[1]
-        key = title + message.author.mention
-        if conn.exists(key):
-            conn.delete(key)
-            print('delete assignment: {}'.format(key))
-            await message.channel.send('課題を削除しました')
-#        elif conn.exists(title+'@everyone'):
-#            conn.delete(title+'@everyone')
-#            print('delete assignment: {}'.format(title+'@everyone'))
-#            await message.channel.send('課題を削除しました')
+    msg = message.content.split()
+    if len(msg)==2:
+        req_title = msg[1]
+        user = message.author.mention
+        for title in conn.hkeys(user):
+            if req_title==title:
+                conn.delete(title)
+                break
         else:
-            print('failed to delete assignment: {}'.format(message.content))
+            print(f'failed to delete assignment: {message.content}')
             await message.channel.send('そのような課題はありません')
-    except:
-        print('failed to delete assignment: {}'.format(message.content))
+
+    else:
+        print(f'failed to delete assignment: {message.content}')
         await message.channel.send('入力形式が間違っています。')
 
 
 async def ls(message):
+    print('!ls called')
+    """
     cnt = 0
     ret = '課題一覧\n'
     for i, key in enumerate(conn.keys()):
@@ -105,6 +79,7 @@ async def ls(message):
     ret += '現在、{}個の課題が出されています。'.format(cnt)
     print('sending list')
     await message.channel.send(ret)
+    """
 
 async def close(message):
     print('I\'ll be back')
@@ -159,10 +134,17 @@ async def on_message(message):
     for command in COMMANDS:
         if msg[0] in ['!' + command, COMMANDS[command]['alias']]:
             await COMMANDS[command]['func'](message)
+            break
+    else:
+        if msg[0][0]=='!':
+            await message.channel.send('そのようなコマンドはありません')
 
 
 @tasks.loop(hours=5)
 async def loop():
+    print('In loop!')
+    pass
+    """
     today = datetime.datetime.now() #+ relativedelta(hours=9)
     tommorow = today + relativedelta(days=1)
     three_days_later = today + relativedelta(days=3)
@@ -216,7 +198,7 @@ async def loop():
 
     channel = client.get_channel(CHANNEL_ID)
     await channel.send(ret)
-
+"""
 
 
 client.run(TOKEN)
