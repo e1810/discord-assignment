@@ -51,7 +51,7 @@ async def delete(message):
         user = message.author.mention
         for title in conn.hkeys(user):
             if req_title==title:
-                conn.delete(user, title)
+                conn.hdel(user, title)
                 print(f'delete assignment: {title}')
                 await message.channel.send('課題を削除しました！: ' + title)
                 break
