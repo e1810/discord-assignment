@@ -36,7 +36,7 @@ async def add(message):
     if len(msg) == 4:
         title, deadline, memo = msg[1:]
         user = message.author.mention
-        conn.hset(user, title, deadline + ',' + memo})
+        conn.hset(user, title, deadline + ',' + memo)
         print(f'add assignment {message.content}')
         await message.channel.send('課題を追加しました！')
 
