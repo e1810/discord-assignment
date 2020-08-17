@@ -16,6 +16,7 @@ conn = redis.from_url(
 
 client = discord.Client()
 guild = client.get_guild(GUILD_ID)
+print(GUILD_ID, guild)
 
 async def man(message):
     print('!help called')
@@ -38,7 +39,7 @@ async def add(message):
         user = message.author.mention
         conn.hset(user, title, deadline + ',' + memo)
         print(f'add assignment {message.content}')
-        await message.channel.send('課題を追加しました！')
+        await message.channel.send('課題を追加しました！: ' + title)
 
     else:
         print(f'failed to add assignment: {message.content}')
@@ -52,11 +53,11 @@ async def delete(message):
         user = message.author.mention
         for title in conn.hkeys(user):
             if req_title==title:
-                conn.delete(title)
+                conn.delete(user, title)
                 break
         else:
             print(f'failed to delete assignment: {message.content}')
-            await message.channel.send('そのような課題はありません')
+            await message.channel.send('そのような課題はありません: ' + req_title)
 
     else:
         print(f'failed to delete assignment: {message.content}')
@@ -80,9 +81,11 @@ async def ls(message):
     print('sent list')
     await message.channel.send(ret)
 
+
 async def close(message):
     print('I\'ll be back')
     await client.close()
+
 
 COMMANDS = {
     'help': {
@@ -117,6 +120,7 @@ COMMANDS = {
     },
 }
 
+
 @client.event
 async def on_ready():
     print('I\'m ready')
@@ -142,62 +146,47 @@ async def on_message(message):
 @tasks.loop(hours=5)
 async def loop():
     print('In loop!')
-    pass
-    """
-    today = datetime.datetime.now() #+ relativedelta(hours=9)
+    today = datetime.datetime.now() + relativedelta(hours=9)
     tommorow = today + relativedelta(days=1)
     three_days_later = today + relativedelta(days=3)
     remain_1day = []
     remain_3day = []
-    guild = client.get_guild(GUILD_ID)
 
-    for key in conn.keys():
-        target = conn.hget(key, 'target')
-        exist = (target == '@everyone')
-        for mem in guild.members:
-            if target==mem.mention:
-                exist = True
-        if not exist:
-            print('delete {} because of undefined mention'.format(key))
-            conn.delete(key)
-            continue
+    for user in guild.members:
+        for title in conn.hkeys(user):
+            deadline, memo = conn.hget(user, title)
+            deadline_str = str(tommorow.year) + '/' + deadline
+            deadline = datetime.datetime.strptime(deadline_str, '%Y/%m/%d')
+            
+            if deadline < today:
+                conn.delete(user, title)
+                continue
+            elif deadline <= tommorow:
+                remain_1day.append(title)
+            elif deadline <= three_days_later:
+                remain_3day.append(title)
 
-        deadline_str = str(tommorow.year) + '/' + conn.hget(key, 'deadline')
-        deadline = datetime.datetime.strptime(deadline_str, '%Y/%m/%d')
-        if deadline < today:
-            conn.delete(key)
-            print('delete {} because of deadline'.format(key)) 
-        elif deadline <= tommorow:
-            remain_1day.append(key)
-        elif deadline <= three_days_later:
-            remain_3day.append(key)
+        ret = '{}個の課題の提出期限が迫っています！\n'.format(len(remain_1day)+len(remain_3day))
+        for i, title in enumerate(remain_3day):
+            deadline, memo = conn.hget(user, title)
+            ret += '------------------------\n'
+            ret += '{}. {}\n'.format(i + 1, title)
+            ret += '締切: {}\n'.format(deadline)
+            ret += '備考: {}\n'.format(memo)
+            ret += '------------------------\n'
 
-    if len(remain_1day)+len(remain_3day)==0:
-        print('there\'s no notification')
-        return
+        if remain_1day:
+            ret += '↓↓↓あと1日もないよ↓↓↓\n'
+        for i, title in enumerate(remain_1day):
+            deadline, memo = conn.hget(user, title)
+            ret += '------------------------\n'
+            ret += '{}. {}\n'.format(i + 1, title)
+            ret += '締切: {}\n'.format(deadline)
+            ret += '備考: {}\n'.format(memo)
+            ret += '------------------------\n'
 
-    print('sending notification')
-    ret = '{}個の課題の提出期限が迫っています！\n'.format(len(remain_1day)+len(remain_3day))
-    for i, key in enumerate(remain_3day):
-        ret += '------------------------\n'
-        ret += '{}. {}\n'.format(i + 1, key)
-        ret += '締切: {}\n'.format(conn.hget(key, 'deadline'))
-        ret += '備考: {}\n'.format(conn.hget(key, 'memo'))
-        ret += '------------------------\n'
-
-    if remain_1day:
-        ret += '↓↓↓あと1日もないよ↓↓↓\n'
-    for i, key in enumerate(remain_1day):
-        ret += '------------------------\n'
-        ret += '{}. {}\n'.format(i + 1, key)
-        ret += '締切: {}\n'.format(conn.hget(key, 'deadline'))
-        ret += '備考: {}\n'.format(conn.hget(key, 'memo'))
-        ret += '------------------------\n'
-        
-
-    channel = client.get_channel(CHANNEL_ID)
-    await channel.send(ret)
-"""
+        await user.send(ret)
+    print('notificaton sent')
 
 
 client.run(TOKEN)
