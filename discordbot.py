@@ -157,7 +157,7 @@ async def loop():
         print('sending notification to', mem.name)
         user = mem.mention
         for title in conn.hkeys(user):
-            deadline, memo = conn.hget(user, title)
+            deadline, memo = conn.hget(user, title).split(',')
             deadline_str = str(tommorow.year) + '/' + deadline
             deadline = datetime.datetime.strptime(deadline_str, '%Y/%m/%d')
             
