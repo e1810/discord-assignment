@@ -189,6 +189,8 @@ async def loop():
             ret += '------------------------\n'
 
         print('notification sent to', mem.name, remain_1day, remain_3day)
+        if mem.dm_channel==None:
+            await mem.create_dm()
         await mem.dm_channel.send(ret)
     print('notificaton sent')
 
