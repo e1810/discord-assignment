@@ -16,6 +16,7 @@ conn = redis.from_url(
 
 client = discord.Client()
 
+
 async def man(message):
     print('!help called')
     ret = 'ヘルプ\n'
@@ -32,11 +33,13 @@ async def add(message):
     print('!add called')
     msg = message.content.split()
 
-    if len(msg) == 4:
+    if len(msg)==4:
         title, deadline, memo = msg[1:]
+        if deadline.count('/')==1:
+            deadline = str(datetime.datetime.now().year) + '/' + deadline
         user = message.author.mention
         conn.hset(user, title, deadline + ',' + memo)
-        print(f'add assignment {message.content}')
+        print(f'add assignment: {message.content}')
         await message.channel.send('課題を追加しました！: ' + title)
 
     else:
@@ -82,7 +85,7 @@ async def ls(message):
     await message.channel.send(ret)
 
 
-async def close(message):
+async def close_client(message):
     print('I\'ll be back')
     await client.close()
 
@@ -96,7 +99,7 @@ COMMANDS = {
     },
     'add': {
         'description': '新しい課題を追加します。',
-        'use': '!add \{課題名\} \{締切\} \{備考\} \{課題対象の生徒\}',
+        'use': '!add \{課題名\} \{締切(Month/Day)\} \{備考\}',
         'alias': '!a',
         'func': add
     },
@@ -112,11 +115,11 @@ COMMANDS = {
         'alias': '!ls',
         'func': ls
     },
-    'exit': {
-        'description': 'Botを終了します。',
-        'use': '!exit',
-        'alias': '!ex',
-        'func': close
+    '__exit': {
+        'description': 'Botを終了します。(非推奨)',
+        'use': '!__exit',
+        'alias': '!__ex',
+        'func': close_client
     },
 }
 
@@ -135,7 +138,7 @@ async def on_message(message):
         return
 
     for command in COMMANDS:
-        if msg[0] in ['!' + command, COMMANDS[command]['alias']]:
+        if msg[0] in ('!' + command, COMMANDS[command]['alias']):
             await COMMANDS[command]['func'](message)
             break
     else:
@@ -145,22 +148,24 @@ async def on_message(message):
 
 @tasks.loop(hours=5)
 async def loop():
-    print('In loop!')
     today = datetime.datetime.now() + relativedelta(hours=9)
     tommorow = today + relativedelta(days=1)
     three_days_later = today + relativedelta(days=3)
+    print('In loop! at ', today.strftime('%Y/%m/%d'))
+
     remain_1day = []
     remain_3day = []
 
     guild = client.get_guild(GUILD_ID)
     for mem in guild.members:
-        print('sending notification to', mem.name)
+        if mem.bot:
+            continue
+
         user = mem.mention
         for title in conn.hkeys(user):
             deadline, memo = conn.hget(user, title).split(',')
-            deadline_str = str(tommorow.year) + '/' + deadline
-            deadline = datetime.datetime.strptime(deadline_str, '%Y/%m/%d')
-            
+            deadline = datetime.datetime.strptime(deadline, '%Y/%m/%d')
+
             if deadline < today:
                 conn.hdel(user, title)
                 continue
@@ -169,7 +174,8 @@ async def loop():
             elif deadline <= three_days_later:
                 remain_3day.append(title)
 
-        ret = '{}個の課題の提出期限が迫っています！\n'.format(len(remain_1day)+len(remain_3day))
+        count = len(remain_1day) + len(remain_3day)
+        ret = '{}個の課題の提出期限が迫っています！\n'.format(count)
         for i, title in enumerate(remain_3day):
             deadline, memo = conn.hget(user, title).split(',')
             ret += '------------------------\n'
@@ -188,11 +194,11 @@ async def loop():
             ret += '備考: {}\n'.format(memo)
             ret += '------------------------\n'
 
-        print('notification sent to', mem.name, remain_1day, remain_3day)
         if mem.dm_channel==None:
             await mem.create_dm()
+        print(f'{count} notification sent to {mem.name}')
         await mem.dm_channel.send(ret)
-    print('notificaton sent')
+    print('done sending notificaton')
 
 
 client.run(TOKEN)

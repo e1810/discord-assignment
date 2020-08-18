@@ -1,0 +1,5 @@
+https://discordpy.readthedocs.io/ja/latest/api.html
+
+datetime
+https://qiita.com/papi_tokei/items/43b1d15a6694f576486c
+https://docs.python.org/ja/3/library/datetime.html
