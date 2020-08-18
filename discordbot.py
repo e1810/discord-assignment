@@ -98,13 +98,13 @@ COMMANDS = {
         'func': man
     },
     'add': {
-        'description': '新しい課題を追加します。',
-        'use': '!add \{課題名\} \{締切(Month/Day)\} \{備考\}',
+        'description': '新しい課題を追加します。締切年省略可(課題を追加した年になります)',
+        'use': '!add \{課題名\} \{締切年月日\} \{備考\}',
         'alias': '!a',
         'func': add
     },
     'delete': {
-        'description': '課題削除',
+        'description': '課題を削除します。',
         'use': '!delete \{課題名\}',
         'alias': '!del',
         'func': delete
@@ -115,10 +115,10 @@ COMMANDS = {
         'alias': '!ls',
         'func': ls
     },
-    '__exit': {
+    '\_exit': {
         'description': 'Botを終了します。(非推奨)',
-        'use': '!__exit',
-        'alias': '!__ex',
+        'use': '!\_exit',
+        'alias': '!\_ex',
         'func': close_client
     },
 }
@@ -151,7 +151,7 @@ async def loop():
     today = datetime.datetime.now() + relativedelta(hours=9)
     tommorow = today + relativedelta(days=1)
     three_days_later = today + relativedelta(days=3)
-    print('In loop! at ', today.strftime('%Y/%m/%d'))
+    print('In loop! at', today.strftime('%Y/%m/%d %H:%M'))
 
 
     guild = client.get_guild(GUILD_ID)
