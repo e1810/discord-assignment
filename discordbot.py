@@ -171,7 +171,7 @@ async def loop():
 
         ret = '{}個の課題の提出期限が迫っています！\n'.format(len(remain_1day)+len(remain_3day))
         for i, title in enumerate(remain_3day):
-            deadline, memo = conn.hget(user, title)
+            deadline, memo = conn.hget(user, title).split(',')
             ret += '------------------------\n'
             ret += '{}. {}\n'.format(i + 1, title)
             ret += '締切: {}\n'.format(deadline)
@@ -181,7 +181,7 @@ async def loop():
         if remain_1day:
             ret += '↓↓↓あと1日もないよ↓↓↓\n'
         for i, title in enumerate(remain_1day):
-            deadline, memo = conn.hget(user, title)
+            deadline, memo = conn.hget(user, title).split(',')
             ret += '------------------------\n'
             ret += '{}. {}\n'.format(i + 1, title)
             ret += '締切: {}\n'.format(deadline)
