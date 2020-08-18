@@ -153,14 +153,16 @@ async def loop():
     remain_3day = []
 
     guild = client.get_guild(GUILD_ID)
-    for user in guild.members:
+    for mem in guild.members:
+        print('sending notification to', mem.name)
+        user = mem.mention
         for title in conn.hkeys(user):
             deadline, memo = conn.hget(user, title)
             deadline_str = str(tommorow.year) + '/' + deadline
             deadline = datetime.datetime.strptime(deadline_str, '%Y/%m/%d')
             
             if deadline < today:
-                conn.delete(user, title)
+                conn.hdel(user, title)
                 continue
             elif deadline <= tommorow:
                 remain_1day.append(title)
@@ -186,7 +188,8 @@ async def loop():
             ret += '備考: {}\n'.format(memo)
             ret += '------------------------\n'
 
-        await user.send(ret)
+        print('notification sent to', mem.name, remain_1day, remain_3day)
+        await mem.dm_channel.send(ret)
     print('notificaton sent')
 
 
