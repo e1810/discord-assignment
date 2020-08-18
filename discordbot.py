@@ -153,15 +153,16 @@ async def loop():
     three_days_later = today + relativedelta(days=3)
     print('In loop! at ', today.strftime('%Y/%m/%d'))
 
-    remain_1day = []
-    remain_3day = []
 
     guild = client.get_guild(GUILD_ID)
     for mem in guild.members:
         if mem.bot:
             continue
 
+        remain_1day = []
+        remain_3day = []
         user = mem.mention
+        
         for title in conn.hkeys(user):
             deadline, memo = conn.hget(user, title).split(',')
             deadline = datetime.datetime.strptime(deadline, '%Y/%m/%d')
