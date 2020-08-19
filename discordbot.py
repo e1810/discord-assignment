@@ -149,7 +149,6 @@ async def on_message(message):
 @tasks.loop(hours=5)
 async def loop():
     today = datetime.datetime.now() # + relativedelta(hours=9)
-    today.hour = today.minute = today.second = today.microsecond = 0
     tommorow = today + relativedelta(days=1)
     three_days_later = today + relativedelta(days=3)
     print('In loop! at', today.strftime('%Y/%m/%d %H:%M'))
