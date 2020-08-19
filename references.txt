@@ -3,7 +3,6 @@ https://qiita.com/50m_regent/items/68395d604b03cb570d76
 
 全般
 https://discordpy.readthedocs.io/ja/latest/api.html
-https://discordpy.readthedocs.io/ja/latest/ext/commands/commands.html#parameters
 
 heroku redis
 https://blog.sojiro.me/blog/2014/07/27/rediss-data-type-and-usage/
@@ -12,3 +11,7 @@ http://redis.shibu.jp/commandreference/hashes.html
 datetimeモジュール
 https://qiita.com/papi_tokei/items/43b1d15a6694f576486c
 https://docs.python.org/ja/3/library/datetime.html
+
+discord.ext.commandフレームワーク
+https://discordpy.readthedocs.io/ja/latest/ext/commands/commands.html#parameters
+https://qiita.com/coolwind0202/items/a4405be45734bd7f6cd5

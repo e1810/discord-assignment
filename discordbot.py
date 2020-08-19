@@ -1,5 +1,6 @@
 import discord
 from discord.ext import tasks, commands
+import logging
 import redis
 
 import os
@@ -14,9 +15,8 @@ conn = redis.from_url(
     decode_responses = True
 )
 
-client = discord.Client()
 bot = commands.Bot(command_prefix='!')
-
+logging.basicConfig(level=logging.ERROR)
 
 COMMANDS = {
     ('help', 'このリストを表示します。', '!help', '!h'),
@@ -27,8 +27,8 @@ COMMANDS = {
 }
 
 bot.remove_command('help')
-@bot.command(name='help')
-async def man(ctx):
+@bot.command(aliases=['h'])
+async def help(ctx):
     print('!help called')
     ret = 'ヘルプ\n'
     for command, description, use, alias in COMMANDS:
@@ -40,7 +40,7 @@ async def man(ctx):
     await ctx.send(ret)
 
 
-@bot.command(name='add')
+@bot.command(aliases=['a'])
 async def add(ctx, title, deadline, memo):
     print('!add called')
 
@@ -49,36 +49,36 @@ async def add(ctx, title, deadline, memo):
     user = message.author.mention
     conn.hset(user, title, deadline + ',' + memo)
     print(f'add assignment: {message.content}')
-    await message.channel.send('課題を追加しました！: ' + title)
+    await ctx.send('課題を追加しました！: ' + title)
 
 @add.error
 async def add_error(ctx, error):
     if isinstance(error, commands.BadArgument):
         print(f'failed to add assignment: {message.content}')
-        await message.channel.send('入力形式が間違っています。')
+        await ctx.send('入力形式が間違っています。')
 
 
-@bot.command(name='del')
+@bot.command(aliases=['del'])
 async def delete(ctx, req_title):
     user = message.author.mention
     for title in conn.hkeys(user):
         if req_title==title:
             conn.hdel(user, title)
             print(f'delete assignment: {title}')
-            await message.channel.send('課題を削除しました！: ' + title)
+            await ctx.send('課題を削除しました！: ' + title)
             break
     else:
         print(f'failed to delete assignment: {message.content}')
-        await message.channel.send('そのような課題はありません: ' + req_title)
+        await ctx.send('そのような課題はありません: ' + req_title)
 
 @delete.error
 async def delete_error(ctx, error):
     if isinstance(error, commands.BadArgument):
         print(f'failed to delete assignment: {message.content}')
-        await message.channel.send('入力形式が間違っています。')
+        await ctx.send('入力形式が間違っています。')
 
 
-@bot.command(name='ls')
+@bot.command(aliases=['list'])
 async def ls(ctx):
     print('!ls called')
     user = ctx.author.mention
@@ -94,17 +94,17 @@ async def ls(ctx):
         cnt += 1
     ret += '現在、{}個の課題が出されています。'.format(cnt)
     print('sent list')
-    await message.channel.send(ret)
+    await ctx.send(ret)
 
 
 @bot.command(name='__exit')
 async def close_client(ctx):
     print('I\'ll be back')
-    await client.close()
+    await bot.close()
 
 
 
-@client.event
+@bot.event
 async def on_ready():
     print('I\'m ready')
     await loop.start()
@@ -118,7 +118,7 @@ async def loop():
     print('In loop! at', today.strftime('%Y/%m/%d %H:%M'))
 
 
-    guild = client.get_guild(GUILD_ID)
+    guild = bot.get_guild(GUILD_ID)
     for mem in guild.members:
         if mem.bot:
             continue
@@ -171,4 +171,4 @@ async def loop():
     print('done sending notificaton')
 
 
-client.run(TOKEN)
+bot.run(TOKEN)
