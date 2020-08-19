@@ -17,16 +17,18 @@ conn = redis.from_url(
 
 bot = commands.Bot(command_prefix='!')
 logging.basicConfig(level=logging.ERROR)
+bot.remove_command('help')
 
-COMMANDS = {
+# (コマンド名, 説明, 呼び出し例, エイリアス)
+COMMANDS = [
     ('help', 'このリストを表示します。', '!help', '!h'),
-    ('add', '新しい課題を追加します。締切年省略可(課題を追加した年になります)', '!add \{課題名\} \{締切(年/月/日)\} \{備考\}', '!a'),
+    ('add', '新しい課題を追加します。\n\t締切年省略可(課題を追加した年になります)', '!add \{課題名\} \{締切(年/月/日)\} \{備考\}', '!a'),
     ('delete',  '課題を削除します。', '!delete \{課題名\}', '!del'),
     ('list', '登録されている課題一覧を表示します。', '!list', '!ls'),
     ('\_\_exit', 'Botを終了します。(非推奨)', '!\_\_exit', '!\_\_ex')
-}
+]
 
-bot.remove_command('help')
+
 @bot.command(aliases=['h'])
 async def help(ctx):
     print('!help called')
@@ -53,9 +55,8 @@ async def add(ctx, title, deadline, memo):
 
 @add.error
 async def add_error(ctx, error):
-    if isinstance(error, commands.BadArgument):
-        print(f'failed to add assignment: {message.content}')
-        await ctx.send('入力形式が間違っています。')
+    print(f'failed to add assignment: {message.content}')
+    await ctx.send('入力形式が間違っています。')
 
 
 @bot.command(aliases=['del'])
@@ -73,9 +74,8 @@ async def delete(ctx, req_title):
 
 @delete.error
 async def delete_error(ctx, error):
-    if isinstance(error, commands.BadArgument):
-        print(f'failed to delete assignment: {message.content}')
-        await ctx.send('入力形式が間違っています。')
+    print(f'failed to delete assignment: {message.content}')
+    await ctx.send('入力形式が間違っています。')
 
 
 @bot.command(aliases=['list'])
@@ -87,12 +87,12 @@ async def ls(ctx):
     for i, title in enumerate(conn.hkeys(user)):
         deadline, memo = conn.hget(user, title).split(',')
         ret += '------------------------\n'
-        ret += '{}. {}\n'.format(cnt + 1, title)
-        ret += '締切: {}\n'.format(deadline)
-        ret += '備考: {}\n'.format(memo)
+        ret += '{cnt+1}. {title}\n'
+        ret += '締切: {deadline}\n'
+        ret += f'備考: {memo}\n'
         ret += '------------------------\n'
         cnt += 1
-    ret += '現在、{}個の課題が出されています。'.format(cnt)
+    ret += f'現在、{cnt}個の課題が出されています。'
     print('sent list')
     await ctx.send(ret)
 
@@ -149,9 +149,9 @@ async def loop():
         for i, title in enumerate(remain_3day):
             deadline, memo = conn.hget(user, title).split(',')
             ret += '------------------------\n'
-            ret += '{}. {}\n'.format(i + 1, title)
-            ret += '締切: {}\n'.format(deadline)
-            ret += '備考: {}\n'.format(memo)
+            ret += f'{i+1}. {title}\n'
+            ret += f'締切: {deadline}\n'
+            ret += f'備考: {memo}\n'
             ret += '------------------------\n'
 
         if remain_1day:
@@ -159,9 +159,9 @@ async def loop():
         for i, title in enumerate(remain_1day):
             deadline, memo = conn.hget(user, title).split(',')
             ret += '------------------------\n'
-            ret += '{}. {}\n'.format(i + 1, title)
-            ret += '締切: {}\n'.format(deadline)
-            ret += '備考: {}\n'.format(memo)
+            ret += f'{i+1}. {title}\n'
+            ret += f'締切: {deadline}\n'
+            ret += f'備考: {memo}\n'
             ret += '------------------------\n'
 
         if mem.dm_channel==None:
