@@ -1,5 +1,5 @@
 import discord
-from discord.ext import tasks
+from discord.ext import tasks, commands
 import redis
 
 import os
@@ -15,61 +15,73 @@ conn = redis.from_url(
 )
 
 client = discord.Client()
+bot = commands.Bot(command_prefix='!')
 
 
-async def man(message):
+COMMANDS = {
+    ('help', 'このリストを表示します。', '!help', '!h'),
+    ('add', '新しい課題を追加します。締切年省略可(課題を追加した年になります)', '!add \{課題名\} \{締切(年/月/日)\} \{備考\}', '!a'),
+    ('delete',  '課題を削除します。', '!delete \{課題名\}', '!del'),
+    ('list', '登録されている課題一覧を表示します。', '!list', '!ls'),
+    ('\_\_exit', 'Botを終了します。(非推奨)', '!\_\_exit', '!\_\_ex')
+}
+
+bot.remove_command('help')
+@bot.command(name='help')
+async def man(ctx):
     print('!help called')
     ret = 'ヘルプ\n'
-    for command in COMMANDS:
+    for command, description, use, alias in COMMANDS:
         ret += '------------------------\n'
-        ret += '{}: {}\n'.format('!' + command, COMMANDS[command]['description'])
-        ret += '    使い方: {}\n'.format(COMMANDS[command]['use'])
-        ret += '    省略形: {}\n'.format(COMMANDS[command]['alias'])
+        ret += f'!{command}: {description}\n'
+        ret += f'    使い方: {use}\n'
+        ret += f'    省略形: {alias}\n'
         ret += '------------------------'
-    await message.channel.send(ret)
+    await ctx.send(ret)
 
 
-async def add(message):
+@bot.command(name='add')
+async def add(ctx, title, deadline, memo):
     print('!add called')
-    msg = message.content.split()
 
-    if len(msg)==4:
-        title, deadline, memo = msg[1:]
-        if deadline.count('/')==1:
-            deadline = str(datetime.datetime.now().year) + '/' + deadline
-        user = message.author.mention
-        conn.hset(user, title, deadline + ',' + memo)
-        print(f'add assignment: {message.content}')
-        await message.channel.send('課題を追加しました！: ' + title)
+    if deadline.count('/')==1:
+        deadline = str(datetime.datetime.now().year) + '/' + deadline
+    user = message.author.mention
+    conn.hset(user, title, deadline + ',' + memo)
+    print(f'add assignment: {message.content}')
+    await message.channel.send('課題を追加しました！: ' + title)
 
-    else:
+@add.error
+async def add_error(ctx, error):
+    if isinstance(error, commands.BadArgument):
         print(f'failed to add assignment: {message.content}')
         await message.channel.send('入力形式が間違っています。')
 
 
-async def delete(message):
-    msg = message.content.split()
-    if len(msg)==2:
-        req_title = msg[1]
-        user = message.author.mention
-        for title in conn.hkeys(user):
-            if req_title==title:
-                conn.hdel(user, title)
-                print(f'delete assignment: {title}')
-                await message.channel.send('課題を削除しました！: ' + title)
-                break
-        else:
-            print(f'failed to delete assignment: {message.content}')
-            await message.channel.send('そのような課題はありません: ' + req_title)
-
+@bot.command(name='del')
+async def delete(ctx, req_title):
+    user = message.author.mention
+    for title in conn.hkeys(user):
+        if req_title==title:
+            conn.hdel(user, title)
+            print(f'delete assignment: {title}')
+            await message.channel.send('課題を削除しました！: ' + title)
+            break
     else:
+        print(f'failed to delete assignment: {message.content}')
+        await message.channel.send('そのような課題はありません: ' + req_title)
+
+@delete.error
+async def delete_error(ctx, error):
+    if isinstance(error, commands.BadArgument):
         print(f'failed to delete assignment: {message.content}')
         await message.channel.send('入力形式が間違っています。')
 
 
-async def ls(message):
+@bot.command(name='ls')
+async def ls(ctx):
     print('!ls called')
-    user = message.author.mention
+    user = ctx.author.mention
     cnt = 0
     ret = '課題一覧\n'
     for i, title in enumerate(conn.hkeys(user)):
@@ -85,65 +97,17 @@ async def ls(message):
     await message.channel.send(ret)
 
 
-async def close_client(message):
+@bot.command(name='__exit')
+async def close_client(ctx):
     print('I\'ll be back')
     await client.close()
 
-
-COMMANDS = {
-    'help': {
-        'description': 'このリストを表示します。',
-        'use': '!help',
-        'alias': '!h',
-        'func': man
-    },
-    'add': {
-        'description': '新しい課題を追加します。締切年省略可(課題を追加した年になります)',
-        'use': '!add \{課題名\} \{締切年月日\} \{備考\}',
-        'alias': '!a',
-        'func': add
-    },
-    'delete': {
-        'description': '課題を削除します。',
-        'use': '!delete \{課題名\}',
-        'alias': '!del',
-        'func': delete
-    },
-    'list': {
-        'description': '登録されている課題一覧を表示します。',
-        'use': '!list',
-        'alias': '!ls',
-        'func': ls
-    },
-    '\_exit': {
-        'description': 'Botを終了します。(非推奨)',
-        'use': '!\_exit',
-        'alias': '!\_ex',
-        'func': close_client
-    },
-}
 
 
 @client.event
 async def on_ready():
     print('I\'m ready')
     await loop.start()
-
-
-@client.event
-async def on_message(message):
-    msg = message.content.split(' ')
-
-    if message.author.bot:
-        return
-
-    for command in COMMANDS:
-        if msg[0] in ('!' + command, COMMANDS[command]['alias']):
-            await COMMANDS[command]['func'](message)
-            break
-    else:
-        if msg[0][0]=='!':
-            await message.channel.send('そのようなコマンドはありません')
 
 
 @tasks.loop(hours=5)

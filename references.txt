@@ -3,6 +3,7 @@ https://qiita.com/50m_regent/items/68395d604b03cb570d76
 
 全般
 https://discordpy.readthedocs.io/ja/latest/api.html
+https://discordpy.readthedocs.io/ja/latest/ext/commands/commands.html#parameters
 
 heroku redis
 https://blog.sojiro.me/blog/2014/07/27/rediss-data-type-and-usage/
