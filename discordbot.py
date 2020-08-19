@@ -48,20 +48,21 @@ async def add(ctx, title, deadline, memo):
 
     if deadline.count('/')==1:
         deadline = str(datetime.datetime.now().year) + '/' + deadline
-    user = message.author.mention
+    user = ctx.author.mention
     conn.hset(user, title, deadline + ',' + memo)
-    print(f'add assignment: {message.content}')
+    print(f'add assignment: {title} {deadline} {memo}')
     await ctx.send('課題を追加しました！: ' + title)
 
 @add.error
 async def add_error(ctx, error):
-    print(f'failed to add assignment: {message.content}')
-    await ctx.send('入力形式が間違っています。')
+    if isinstance(error, commands.MissingRequiredArgument):
+        print(f'failed to add assignment: {ctx.message.content}')
+        await ctx.send('入力形式が間違っています。')
 
 
 @bot.command(aliases=['del'])
 async def delete(ctx, req_title):
-    user = message.author.mention
+    user = ctx.author.mention
     for title in conn.hkeys(user):
         if req_title==title:
             conn.hdel(user, title)
@@ -69,13 +70,14 @@ async def delete(ctx, req_title):
             await ctx.send('課題を削除しました！: ' + title)
             break
     else:
-        print(f'failed to delete assignment: {message.content}')
+        print(f'failed to delete assignment: {req_title}')
         await ctx.send('そのような課題はありません: ' + req_title)
 
 @delete.error
 async def delete_error(ctx, error):
-    print(f'failed to delete assignment: {message.content}')
-    await ctx.send('入力形式が間違っています。')
+    if isinstance(error, commands.MissingRequiredArgument):
+        print(f'failed to delete assignment: {ctx.message.content}')
+        await ctx.send('入力形式が間違っています。')
 
 
 @bot.command(aliases=['list'])
