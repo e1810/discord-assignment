@@ -177,6 +177,10 @@ async def loop():
                 remain_3day.append(title)
 
         count = len(remain_1day) + len(remain_3day)
+        if count==0:
+            print(f'No notification sent to {mem.name}')
+            continue
+
         ret = '{}個の課題の提出期限が迫っています！\n'.format(count)
         for i, title in enumerate(remain_3day):
             deadline, memo = conn.hget(user, title).split(',')
