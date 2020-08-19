@@ -48,6 +48,12 @@ async def add(ctx, title, deadline, memo):
 
     if deadline.count('/')==1:
         deadline = str(datetime.datetime.now().year) + '/' + deadline
+    try:
+        datetime.datetime.strptime(deadline, '%Y/%m/%d')
+    except:
+        print(f'failed to add assignment: {ctx.message.content}')
+        await ctx.send(f'無効な日付です。: {ctx.message.content}')
+    
     user = ctx.author.mention
     conn.hset(user, title, deadline + ',' + memo)
     print(f'add assignment: {title} {deadline} {memo}')
@@ -89,8 +95,8 @@ async def ls(ctx):
     for i, title in enumerate(conn.hkeys(user)):
         deadline, memo = conn.hget(user, title).split(',')
         ret += '------------------------\n'
-        ret += '{cnt+1}. {title}\n'
-        ret += '締切: {deadline}\n'
+        ret += f'{cnt+1}. {title}\n'
+        ret += f'締切: {deadline}\n'
         ret += f'備考: {memo}\n'
         ret += '------------------------\n'
         cnt += 1
