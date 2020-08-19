@@ -9,6 +9,7 @@ from dateutil.relativedelta import relativedelta
 
 TOKEN = os.environ.get('BOT_TOKEN')
 GUILD_ID = int(os.environ.get('KADAI_GUILD_ID'))
+LOOP_DURATION = int(os.environ.get('KADAI_LOOP_DURATION'))
 
 conn = redis.from_url(
     url = os.environ.get('REDIS_URL'),
@@ -53,6 +54,7 @@ async def add(ctx, title, deadline, memo):
     except:
         print(f'failed to add assignment: {ctx.message.content}')
         await ctx.send(f'無効な日付です。: {ctx.message.content}')
+        return
     
     user = ctx.author.mention
     conn.hset(user, title, deadline + ',' + memo)
@@ -118,7 +120,7 @@ async def on_ready():
     await loop.start()
 
 
-@tasks.loop(hours=5)
+@tasks.loop(hours=LOOP_DURATION)
 async def loop():
     today = datetime.datetime.now() # + relativedelta(hours=9)
     tommorow = today + relativedelta(days=1)
