@@ -7,9 +7,11 @@ import os
 import datetime
 from dateutil.relativedelta import relativedelta
 
+
 TOKEN = os.environ.get('BOT_TOKEN')
 GUILD_ID = int(os.environ.get('KADAI_GUILD_ID'))
 LOOP_DURATION = int(os.environ.get('KADAI_LOOP_DURATION'))
+
 
 conn = redis.from_url(
     url = os.environ.get('REDIS_URL'),
@@ -19,6 +21,7 @@ conn = redis.from_url(
 bot = commands.Bot(command_prefix='!')
 logging.basicConfig(level=logging.ERROR)
 bot.remove_command('help')
+
 
 # (コマンド名, 説明, 呼び出し例, エイリアス)
 COMMANDS = [
@@ -107,7 +110,7 @@ async def ls(ctx):
     await ctx.send(ret)
 
 
-@bot.command(name='__exit')
+@bot.command(name='__exit', aliases=['__ex'])
 async def close_client(ctx):
     print('I\'ll be back')
     await bot.close()
