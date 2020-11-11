@@ -26,7 +26,7 @@ bot.remove_command('help')
 # (コマンド名, 説明, 呼び出し例, エイリアス)
 COMMANDS = [
     ('help', 'このリストを表示します。', '!help', '!h'),
-    ('add', '新しい課題を追加します。\n\t締切年省略可(課題を追加した年になります)', '!add \{課題名\} \{締切(年/月/日)\} \{備考\}', '!a'),
+    ('add', '新しい課題を追加します。\n\t締切年省略可(課題を追加した年になります)', '!add \{課題名\} \{締切(年/月/日)\} \{備考(任意)\}', '!a'),
     ('delete',  '課題を削除します。', '!delete \{課題名\}', '!del'),
     ('list', '登録されている課題一覧を表示します。', '!list', '!ls'),
     ('\_\_exit', 'Botを終了します。(非推奨)', '!\_\_exit', '!\_\_ex')
@@ -47,8 +47,9 @@ async def help(ctx):
 
 
 @bot.command(aliases=['a'])
-async def add(ctx, title, deadline, memo):
+async def add(ctx, title, deadline, *memo):
     print('!add called')
+    memo = " ".join(memo)
 
     if deadline.count('/')==1:
         deadline = str(datetime.datetime.now().year) + '/' + deadline
