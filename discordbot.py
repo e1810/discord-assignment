@@ -18,7 +18,10 @@ conn = redis.from_url(
 	decode_responses = True
 )
 
-bot = commands.Bot(command_prefix='!')
+intents = discord.Intents.default()
+intents.members = True
+
+bot = commands.Bot(command_prefix='!', intents=intents)
 logging.basicConfig(level=logging.ERROR)
 bot.remove_command('help')
 
