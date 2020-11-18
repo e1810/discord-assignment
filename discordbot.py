@@ -13,14 +13,17 @@ GUILD_ID = int(os.environ.get('KADAI_GUILD_ID'))
 LOOP_DURATION = int(os.environ.get('KADAI_LOOP_DURATION'))
 
 
+# database
 conn = redis.from_url(
 	url = os.environ.get('REDIS_URL'),
 	decode_responses = True
 )
 
+# bot に guild の member へのアクセス権を付与
 intents = discord.Intents.default()
 intents.members = True
 
+# bot 設置・コマンドの諸設定
 bot = commands.Bot(command_prefix='!', intents=intents)
 logging.basicConfig(level=logging.ERROR)
 bot.remove_command('help')
