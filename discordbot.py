@@ -41,7 +41,7 @@ def get_id(member):
 	ret = list(member.mention)
 	if ret[2] in ('!', '&'):
 		del ret[2]
-	return ret
+	return "".join(ret)
 
 
 @bot.command(aliases=['h'])
