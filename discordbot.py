@@ -36,6 +36,14 @@ COMMANDS = [
 ]
 
 
+# member.mention の '!','&','#' などの特殊文字を除外したものを返す
+def get_id(member):
+	ret = list(member.mention)
+	if ret[2] in ('!', '&'):
+		del ret[2]
+	return ret
+
+
 @bot.command(aliases=['h'])
 async def help(ctx):
 	print('!help called')
@@ -63,7 +71,7 @@ async def add(ctx, title, deadline, *memo):
 		await ctx.send(f'無効な日付です。: {ctx.message.content}')
 		return
 	
-	user = ctx.author.mention
+	user = get_id(ctx.author)
 	conn.hset(user, title, deadline + ',' + memo)
 	print(f'add assignment: {title} {deadline} {memo}')
 	await ctx.send('課題を追加しました！: ' + title)
@@ -77,7 +85,7 @@ async def add_error(ctx, error):
 
 @bot.command(aliases=['del'])
 async def delete(ctx, req_title):
-	user = ctx.author.mention
+	user = get_id(ctx.author)
 	for title in conn.hkeys(user):
 		if req_title==title:
 			conn.hdel(user, title)
@@ -98,7 +106,7 @@ async def delete_error(ctx, error):
 @bot.command(aliases=['list'])
 async def ls(ctx):
 	print('!ls called')
-	user = ctx.author.mention
+	user = get_id(ctx.author)
 	cnt = 0
 	ret = '課題一覧\n'
 	for i, title in enumerate(conn.hkeys(user)):
@@ -144,7 +152,7 @@ async def loop():
 
 		remain_1day = []
 		remain_3day = []
-		user = mem.mention
+		user = get_id(mem)
 		
 		for title in conn.hkeys(user):
 			deadline, memo = conn.hget(user, title).split(',')
