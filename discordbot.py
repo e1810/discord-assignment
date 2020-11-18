@@ -134,9 +134,11 @@ async def loop():
 	three_days_later = today + relativedelta(days=3)
 	print('In loop! at', today.strftime('%Y/%m/%d %H:%M'))
 
+	guild_members = set()
+	for guild in bot.guilds:
+		guild_members.update(guild.members)
 
-	guild = bot.get_guild(GUILD_ID)
-	for mem in guild.members:
+	for mem in guild_members:
 		if mem.bot:
 			continue
 
